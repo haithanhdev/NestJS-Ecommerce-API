@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common'
-import { RegisterBodyType } from 'src/routes/auth/auth.model'
+import { RegisterBodyType, SendOTPBodyType } from 'src/routes/auth/auth.model'
 import { AuthRepository } from 'src/routes/auth/auth.repo'
 import { RolesService } from 'src/routes/auth/roles.service'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
@@ -30,6 +30,10 @@ export class AuthService {
       }
       throw error
     }
+  }
+
+  async sendOTP(body: SendOTPBodyType) {
+    return body
   }
 
   // async login(body: any) {
