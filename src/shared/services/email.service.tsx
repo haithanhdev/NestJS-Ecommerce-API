@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { Resend } from 'resend'
 import envConfig from 'src/shared/config'
-import fs from 'fs'
-import path from 'path'
+import * as React from 'react'
+import { OTPEmail } from 'emails/otp'
+import { render } from '@react-email/render'
+
 @Injectable()
 export class EmailService {
   private resend: Resend
@@ -11,16 +13,17 @@ export class EmailService {
   }
   async sendOTP(payload: { email: string; code: string }) {
     const subject = 'Mã OTP'
-    const otpTemplate = fs.readFileSync(path.resolve('src/shared/email-templates/otp.html'), {
-      encoding: 'utf-8',
-    })
+    //Sử dụng cho mọi SDK gửi email không hỗ trợ react
+    // const html = await render(<OTPEmail otpCode={payload.code} title={subject} />)
+    // console.log(html)
 
     return await this.resend.emails.send({
       //Chưa verify domain thì để mặc định vậy
       from: 'Nest.js Ecommerce <no-reply@devhueit.io.vn>',
       to: [payload.email],
       subject: subject,
-      html: otpTemplate.replaceAll('{{subject}}', subject).replaceAll('{{code}}', payload.code),
+      react: <OTPEmail otpCode={payload.code} title={subject} />,
+      // html: html,
     })
   }
 }
