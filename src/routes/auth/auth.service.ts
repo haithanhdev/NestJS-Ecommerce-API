@@ -103,7 +103,7 @@ export class AuthService {
         },
       ])
     }
-    return verificationCode
+    return { message: 'Send OTP successfully' }
   }
 
   async login(body: LoginBodyType & { userAgent: string; ip: string }) {
@@ -205,24 +205,26 @@ export class AuthService {
     }
   }
 
-  // async logout(refreshToken: string) {
-  //   try {
-  //     // 1. Kiểm tra refreshToken có hợp lệ không
-  //     await this.tokenService.verifyRefreshToken(refreshToken)
-  //     // 2. Xóa refreshToken trong database
-  //     await this.prismaService.refreshToken.delete({
-  //       where: {
-  //         token: refreshToken,
-  //       },
-  //     })
-  //     return { message: 'Logout successfully' }
-  //   } catch (error) {
-  //     // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
-  //     // refresh token của họ đã bị đánh cắp
-  //     if (isNotFoundPrismaError(error)) {
-  //       throw new UnauthorizedException('Refresh token has been revoked')
-  //     }
-  //     throw new UnauthorizedException()
-  //   }
-  // }
+  async logout(refreshToken: string) {
+    try {
+      // 1. Kiểm tra refreshToken có hợp lệ không
+      await this.tokenService.verifyRefreshToken(refreshToken)
+      // 2. Xóa refreshToken trong database
+      const deletedRefreshToken = await this.authRepository.deleteRefreshToken({
+        token: refreshToken,
+      })
+      //3. Cap nhat device da logout
+      await this.authRepository.updateDevice(deletedRefreshToken.deviceId, {
+        isActive: false,
+      })
+      return { message: 'Logout successfully' }
+    } catch (error) {
+      // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
+      // refresh token của họ đã bị đánh cắp
+      if (isNotFoundPrismaError(error)) {
+        throw new UnauthorizedException('Refresh token has been used')
+      }
+      throw new UnauthorizedException()
+    }
+  }
 }
