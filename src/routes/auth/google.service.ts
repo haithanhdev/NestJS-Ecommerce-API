@@ -4,6 +4,7 @@ import { google } from 'googleapis'
 import { GetAuthorizationUrlResType, GoogleAuthStateType, LoginResType } from 'src/routes/auth/auth.model'
 import { AuthRepository } from 'src/routes/auth/auth.repo'
 import { AuthService } from 'src/routes/auth/auth.service'
+import { GoogleUserInfoError } from 'src/routes/auth/error.model'
 import { RolesService } from 'src/routes/auth/roles.service'
 import envConfig from 'src/shared/config'
 import { HashingService } from 'src/shared/services/hashing.service'
@@ -65,7 +66,7 @@ export class GoogleService {
       const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client })
       const { data } = await oauth2.userinfo.get()
       if (!data.email) {
-        throw new Error('Cannot get email from google')
+        throw GoogleUserInfoError
       }
       let user = await this.authRepository.findUniqueUserIncludeRole({ email: data.email })
       //Neu khong co user thi tuc la nguoi moi

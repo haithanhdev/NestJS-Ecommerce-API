@@ -18,6 +18,16 @@ import envConfig from 'src/shared/config'
 import { TypeOfVerificationCode } from 'src/shared/constants/auth.constants'
 import { EmailService } from 'src/shared/services/email.service'
 import { AccessTokenPayloadCreate } from 'src/shared/types/jwt.type'
+import {
+  EmailAlreadyExistsException,
+  EmailNotFoundException,
+  FailedToSendOTPException,
+  InvalidOTPException,
+  InvalidPasswordException,
+  OTPExpiredException,
+  RefreshTokenAlreadyUsedException,
+  UnauthorizedAccessException,
+} from 'src/routes/auth/error.model'
 
 @Injectable()
 export class AuthService {
@@ -37,20 +47,10 @@ export class AuthService {
         code: body.code,
       })
       if (!verificationCode) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'OTP is invalid',
-            path: 'code',
-          },
-        ])
+        throw InvalidOTPException
       }
       if (verificationCode.expiresAt < new Date()) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'OTP is expired',
-            path: 'code',
-          },
-        ])
+        throw OTPExpiredException
       }
       const clientRoleId = await this.rolesService.getClientRoleId()
       const hashedPassword = await this.hashingService.hash(body.password)
@@ -63,12 +63,7 @@ export class AuthService {
       })
     } catch (error) {
       if (isUniqueConstraintPrismaError(error)) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'Email already exists',
-            path: 'email',
-          },
-        ])
+        throw EmailAlreadyExistsException
       }
       throw error
     }
@@ -78,12 +73,7 @@ export class AuthService {
     //Kiem tra email da ton tai trong DB hay chua?
     const user = await this.sharedUserRepository.findUnique({ email: body.email })
     if (user) {
-      throw new UnprocessableEntityException([
-        {
-          message: 'Email already exists',
-          path: 'email',
-        },
-      ])
+      throw EmailAlreadyExistsException
     }
     //Tao ma OTP
     const code = generateOTP()
@@ -96,12 +86,7 @@ export class AuthService {
     //Gui ma OTP qua email
     const { error } = await this.emailService.sendOTP({ email: body.email, code: code })
     if (error) {
-      throw new UnprocessableEntityException([
-        {
-          message: 'Send OTP failed',
-          path: 'code',
-        },
-      ])
+      throw FailedToSendOTPException
     }
     return { message: 'Send OTP successfully' }
   }
@@ -112,23 +97,13 @@ export class AuthService {
     })
     //Khong tim thay email
     if (!user) {
-      throw new UnprocessableEntityException([
-        {
-          message: 'Email is not exists',
-          path: 'email',
-        },
-      ])
+      throw EmailNotFoundException
     }
 
     const isPasswordMatch = await this.hashingService.compare(body.password, user.password)
     //Sai mat khau
     if (!isPasswordMatch) {
-      throw new UnprocessableEntityException([
-        {
-          path: 'password',
-          message: 'Password is incorrect',
-        },
-      ])
+      throw InvalidPasswordException
     }
     //Tao record device moi
     const device = await this.authRepository.createDevice({
@@ -177,7 +152,7 @@ export class AuthService {
       if (!refreshTokenInDb) {
         // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
         // refresh token của họ đã bị đánh cắp
-        throw new UnauthorizedException('Refresh token has been used')
+        throw RefreshTokenAlreadyUsedException
       }
       const {
         deviceId,
@@ -204,7 +179,7 @@ export class AuthService {
       if (error instanceof HttpException) {
         throw error
       }
-      throw new UnauthorizedException()
+      throw UnauthorizedAccessException
     }
   }
 
@@ -225,9 +200,9 @@ export class AuthService {
       // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
       // refresh token của họ đã bị đánh cắp
       if (isNotFoundPrismaError(error)) {
-        throw new UnauthorizedException('Refresh token has been used')
+        throw RefreshTokenAlreadyUsedException
       }
-      throw new UnauthorizedException()
+      throw UnauthorizedAccessException
     }
   }
 }
