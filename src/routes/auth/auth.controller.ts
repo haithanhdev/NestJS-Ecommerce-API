@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Ip, Post, Query, Req, Res 
 import { Response } from 'express'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
+  ForgotPasswordBodyDTO,
   GetAuthorizationUrlResDTO,
   LoginBodyDTO,
   LoginResDTO,
@@ -89,5 +90,11 @@ export class AuthController {
       const message = error instanceof Error ? error.message : 'Login with google failed, please try again'
       return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?errorMessage=${message}`)
     }
+  }
+  @Post('forgot-password')
+  @IsPublic()
+  @ZodSerializerDto(MessageResDTO)
+  async forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
+    return await this.authService.forgotPassword(body)
   }
 }
