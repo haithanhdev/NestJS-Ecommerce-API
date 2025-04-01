@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Ip, Post, Query, Req, Res 
 import { Response } from 'express'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
+  DisableTwoFactorBodyDTO,
   ForgotPasswordBodyDTO,
   GetAuthorizationUrlResDTO,
   LoginBodyDTO,
@@ -12,14 +13,17 @@ import {
   RegisterBodyDTO,
   RegisterResDTO,
   SendOTPBodyDTO,
+  TwoFactorSetupResDTO,
 } from 'src/routes/auth/auth.dto'
 
 import { AuthService } from 'src/routes/auth/auth.service'
 import { GoogleService } from 'src/routes/auth/google.service'
 import envConfig from 'src/shared/config'
+import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
 // import { IP } from 'src/shared/decorators/ip.decorator'
 import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
+import { EmptyBodyDTO } from 'src/shared/dtos/request.dto'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 
 @Controller('auth')
@@ -96,5 +100,22 @@ export class AuthController {
   @ZodSerializerDto(MessageResDTO)
   async forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
     return await this.authService.forgotPassword(body)
+  }
+  //Tai sao khong dung get thay vi post khi ma body gui len {}
+  //Vi post mang y nghia la tao ra cai gi do va POST cung bao mat hon get
+  //Vi get co the duoc kich hoat thong qua URL tren trinh duyet, Post thi khong
+  @Post('2fa/setup')
+  @ZodSerializerDto(TwoFactorSetupResDTO)
+  async setupTwoFactorAuth(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
+    return await this.authService.setupTwoFactorAuth(userId)
+  }
+
+  @Post('2fa/disable')
+  @ZodSerializerDto(MessageResDTO)
+  disableTwoFactorAuth(@Body() body: DisableTwoFactorBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.authService.disableTwoFactorAuth({
+      ...body,
+      userId,
+    })
   }
 }
