@@ -1,4 +1,5 @@
 import { TypeOfVerificationCode, UserStatus } from 'src/shared/constants/auth.constants'
+import { RoleSchema } from 'src/shared/models/shared-role.model'
 import { UserSchema } from 'src/shared/models/shared-user.model'
 import { z } from 'zod'
 
@@ -106,21 +107,6 @@ export const DeviceSchema = z
     lastActive: z.date(),
     createdAt: z.date(),
     isActive: z.boolean(),
-  })
-  .strict()
-
-//Role
-export const RoleSchema = z
-  .object({
-    id: z.number(),
-    name: z.string(),
-    description: z.string(),
-    isActive: z.boolean(),
-    createdById: z.number().nullable(),
-    updatedById: z.number().nullable(),
-    deletedAt: z.date().nullable(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
   })
   .strict()
 
