@@ -15,17 +15,20 @@ async function bootstrap() {
       deletedAt: null,
     },
   })
-  const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string }[] = router.stack
-    .filter((layer) => layer.route)
-    .map((layer) => {
-      const path = layer.route.path
-      const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod
-      return {
-        path,
-        method,
-        name: method + ' ' + path,
-      }
-    })
+  const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string; module: string }[] =
+    router.stack
+      .filter((layer) => layer.route)
+      .map((layer) => {
+        const path = layer.route.path
+        const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod
+        const moduleName = String(path.split('/')[1]).toUpperCase()
+        return {
+          path,
+          method,
+          name: method + ' ' + path,
+          module: moduleName,
+        }
+      })
   //Tạo object permissionInDbMap với key là [method-path]
   const permissionsInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item
