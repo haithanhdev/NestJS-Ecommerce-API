@@ -7,13 +7,13 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import CustomZodValidationPipe from 'src/shared/pipes/custom-zod-validation.pipe'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { HttpExceptionFilter } from 'src/shared/filters/http-exception.filter'
-import { CatchEverythingFilter } from 'src/shared/filters/catch-everything.filter'
 import { LanguageModule } from './routes/language/language.module'
-import { PermissionModule } from './routes/permission/permission.module';
-import { RoleModule } from './routes/role/role.module';
+import { PermissionModule } from './routes/permission/permission.module'
+import { RoleModule } from './routes/role/role.module'
+import { ProfileModule } from './routes/profile/profile.module'
 
 @Module({
-  imports: [SharedModule, AuthModule, LanguageModule, PermissionModule, RoleModule],
+  imports: [SharedModule, AuthModule, LanguageModule, PermissionModule, RoleModule, ProfileModule],
   controllers: [AppController],
   providers: [
     AppService,

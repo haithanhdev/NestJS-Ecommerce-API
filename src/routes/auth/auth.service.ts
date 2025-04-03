@@ -1,10 +1,4 @@
-import {
-  ConflictException,
-  HttpException,
-  Injectable,
-  UnauthorizedException,
-  UnprocessableEntityException,
-} from '@nestjs/common'
+import { HttpException, Injectable } from '@nestjs/common'
 import { addMilliseconds } from 'date-fns'
 import {
   DisableTwoFactorBodyType,
@@ -22,7 +16,6 @@ import { HashingService } from 'src/shared/services/hashing.service'
 import { TokenService } from 'src/shared/services/token.service'
 import ms from 'ms'
 import envConfig from 'src/shared/config'
-import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 import { EmailService } from 'src/shared/services/email.service'
 import { AccessTokenPayloadCreate } from 'src/shared/types/jwt.type'
 import {
@@ -30,8 +23,8 @@ import {
   EmailNotFoundException,
   FailedToSendOTPException,
   InvalidOTPException,
-  InvalidPasswordException,
   InvalidTOTPAndCodeException,
+  InvalidTOTPException,
   OTPExpiredException,
   RefreshTokenAlreadyUsedException,
   TOTPAlreadyEnabledException,
@@ -39,6 +32,8 @@ import {
   UnauthorizedAccessException,
 } from 'src/routes/auth/auth.error'
 import { TwoFactorService } from 'src/shared/services/2fa.service'
+import { InvalidPasswordException } from 'src/shared/error'
+import { TypeOfVerificationCode, TypeOfVerificationCodeType } from 'src/shared/constants/auth.constants'
 
 @Injectable()
 export class AuthService {
@@ -51,6 +46,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly twoFactorService: TwoFactorService,
   ) {}
+
   async validateVerificationCode({
     email,
     code,
@@ -60,20 +56,20 @@ export class AuthService {
     code: string
     type: TypeOfVerificationCodeType
   }) {
-    const verificationCode = await this.authRepository.findUniqueVerificationCode({
+    const vevificationCode = await this.authRepository.findUniqueVerificationCode({
       email_code_type: {
         email,
-        type,
         code,
+        type,
       },
     })
-    if (!verificationCode) {
+    if (!vevificationCode) {
       throw InvalidOTPException
     }
-    if (verificationCode.expiresAt < new Date()) {
+    if (vevificationCode.expiresAt < new Date()) {
       throw OTPExpiredException
     }
-    return verificationCode
+    return vevificationCode
   }
   async register(body: RegisterBodyType) {
     try {
@@ -96,7 +92,7 @@ export class AuthService {
           email_code_type: {
             email: body.email,
             code: body.code,
-            type: TypeOfVerificationCode.REGISTER,
+            type: TypeOfVerificationCode.FORGOT_PASSWORD,
           },
         }),
       ])
@@ -110,54 +106,58 @@ export class AuthService {
   }
 
   async sendOTP(body: SendOTPBodyType) {
-    //Kiem tra email da ton tai trong DB hay chua?
-    const user = await this.sharedUserRepository.findUnique({ email: body.email })
+    const user = await this.sharedUserRepository.findUnique({
+      email: body.email,
+      deletedAt: null,
+    })
     if (body.type === TypeOfVerificationCode.REGISTER && user) {
       throw EmailAlreadyExistsException
     }
     if (body.type === TypeOfVerificationCode.FORGOT_PASSWORD && !user) {
       throw EmailNotFoundException
     }
-    //Tao ma OTP
+    // 2. Tạo mã OTP
     const code = generateOTP()
     await this.authRepository.createVerificationCode({
       email: body.email,
-      code: code,
+      code,
       type: body.type,
       expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN)),
     })
-    //Gui ma OTP qua email
-    const { error } = await this.emailService.sendOTP({ email: body.email, code: code })
+    // 3. Gửi mã OTP
+    const { error } = await this.emailService.sendOTP({
+      email: body.email,
+      code,
+    })
     if (error) {
       throw FailedToSendOTPException
     }
-    return { message: 'Send OTP successfully' }
+    return { message: 'Gửi mã OTP thành công' }
   }
 
   async login(body: LoginBodyType & { userAgent: string; ip: string }) {
-    //1. Lay thong tin user, kiem tra user co ton tai hay khong? va kiem tra password hop le hay khong
+    // 1. Lấy thông tin user, kiểm tra user có tồn tại hay không, mật khẩu có đúng không
     const user = await this.authRepository.findUniqueUserIncludeRole({
       email: body.email,
+      deletedAt: null,
     })
-    //Khong tim thay email
+
     if (!user) {
       throw EmailNotFoundException
     }
 
     const isPasswordMatch = await this.hashingService.compare(body.password, user.password)
-    //Sai mat khau
     if (!isPasswordMatch) {
       throw InvalidPasswordException
     }
-
-    //2. Neu user da bat ma 2FA thi kiem tra ma 2FA TOTP Code hoac OTP Code (email)
+    // 2. Nếu user đã bật mã 2FA thì kiểm tra mã 2FA TOTP Code hoặc OTP Code (email)
     if (user.totpSecret) {
-      //Neu khong co ma TOTP Code va OTP Code thi thong bao cho client
+      // Nếu không có mã TOTP Code và Code thì thông báo cho client biết
       if (!body.totpCode && !body.code) {
         throw InvalidTOTPAndCodeException
       }
 
-      //Kiem tra TOTP Code
+      // Kiểm tra TOTP Code có hợp lệ hay không
       if (body.totpCode) {
         const isValid = this.twoFactorService.verifyTOTP({
           email: user.email,
@@ -165,10 +165,10 @@ export class AuthService {
           token: body.totpCode,
         })
         if (!isValid) {
-          throw InvalidTOTPAndCodeException
+          throw InvalidTOTPException
         }
       } else if (body.code) {
-        //Kiem tra OTP Code
+        // Kiểm tra mã OTP có hợp lệ không
         await this.validateVerificationCode({
           email: user.email,
           code: body.code,
@@ -176,13 +176,15 @@ export class AuthService {
         })
       }
     }
-    //3. Tao record device moi
+
+    // 3. Tạo mới device
     const device = await this.authRepository.createDevice({
       userId: user.id,
       userAgent: body.userAgent,
       ip: body.ip,
     })
-    //4. Tao tokens
+
+    // 4. Tạo mới accessToken và refreshToken
     const tokens = await this.generateTokens({
       userId: user.id,
       deviceId: device.id,
@@ -200,7 +202,9 @@ export class AuthService {
         roleId,
         roleName,
       }),
-      this.tokenService.signRefreshToken({ userId }),
+      this.tokenService.signRefreshToken({
+        userId,
+      }),
     ])
     const decodedRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken)
     await this.authRepository.createRefreshToken({
@@ -232,18 +236,17 @@ export class AuthService {
           role: { name: roleName },
         },
       } = refreshTokenInDb
-      // 3. Cap nhat device
+      // 3. Cập nhật device
       const $updateDevice = this.authRepository.updateDevice(deviceId, {
-        userAgent,
         ip,
+        userAgent,
       })
       // 4. Xóa refreshToken cũ
       const $deleteRefreshToken = this.authRepository.deleteRefreshToken({
         token: refreshToken,
       })
       // 5. Tạo mới accessToken và refreshToken
-      const $tokens = this.generateTokens({ userId, deviceId, roleId, roleName })
-
+      const $tokens = this.generateTokens({ userId, roleId, roleName, deviceId })
       const [, , tokens] = await Promise.all([$updateDevice, $deleteRefreshToken, $tokens])
       return tokens
     } catch (error) {
@@ -262,11 +265,11 @@ export class AuthService {
       const deletedRefreshToken = await this.authRepository.deleteRefreshToken({
         token: refreshToken,
       })
-      //3. Cap nhat device da logout
+      // 3. Cập nhật device là đã logout
       await this.authRepository.updateDevice(deletedRefreshToken.deviceId, {
         isActive: false,
       })
-      return { message: 'Logout successfully' }
+      return { message: 'Đăng xuất thành công' }
     } catch (error) {
       // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
       // refresh token của họ đã bị đánh cắp
@@ -276,45 +279,51 @@ export class AuthService {
       throw UnauthorizedAccessException
     }
   }
+
   async forgotPassword(body: ForgotPasswordBodyType) {
     const { email, code, newPassword } = body
-    //1. Kiem tra email co trong database hay chua
-    const user = await this.sharedUserRepository.findUnique({ email: email })
+    // 1. Kiểm tra email đã tồn tại trong database chưa
+    const user = await this.sharedUserRepository.findUnique({
+      email,
+      deletedAt: null,
+    })
     if (!user) {
       throw EmailNotFoundException
     }
-    //2. OTP co hop le hay khong
+    //2. Kiểm tra mã OTP có hợp lệ không
     await this.validateVerificationCode({
       email,
       code,
       type: TypeOfVerificationCode.FORGOT_PASSWORD,
     })
-    //3. Cap nhat password moi va xoa di OTP
+    //3. Cập nhật lại mật khẩu mới và xóa đi OTP
     const hashedPassword = await this.hashingService.hash(newPassword)
     await Promise.all([
-      this.authRepository.updateUser(
-        {
-          id: user.id,
-        },
+      this.sharedUserRepository.update(
+        { id: user.id, deletedAt: null },
         {
           password: hashedPassword,
+          updatedById: user.id,
         },
       ),
       this.authRepository.deleteVerificationCode({
         email_code_type: {
-          email,
-          code,
+          email: body.email,
+          code: body.code,
           type: TypeOfVerificationCode.FORGOT_PASSWORD,
         },
       }),
     ])
-
-    return { message: 'Forgot password successfully' }
+    return {
+      message: 'Đổi mật khẩu thành công',
+    }
   }
+
   async setupTwoFactorAuth(userId: number) {
     // 1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và xem họ đã bật 2FA chưa
     const user = await this.sharedUserRepository.findUnique({
       id: userId,
+      deletedAt: null,
     })
     if (!user) {
       throw EmailNotFoundException
@@ -325,19 +334,18 @@ export class AuthService {
     // 2. Tạo ra secret và uri
     const { secret, uri } = this.twoFactorService.generateTOTPSecret(user.email)
     // 3. Cập nhật secret vào user trong database
-    await this.authRepository.updateUser({ id: userId }, { totpSecret: secret })
+    await this.sharedUserRepository.update({ id: userId, deletedAt: null }, { totpSecret: secret, updatedById: userId })
     // 4. Trả về secret và uri
     return {
       secret,
       uri,
     }
   }
+
   async disableTwoFactorAuth(data: DisableTwoFactorBodyType & { userId: number }) {
-    const { totpCode, code, userId } = data
-    //1. Lay thong tin user, kiem tra user co ton tai hay khong? va kiem tra ho da bat 2FA chua
-    const user = await this.sharedUserRepository.findUnique({
-      id: userId,
-    })
+    const { userId, totpCode, code } = data
+    // 1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và xem họ đã bật 2FA chưa
+    const user = await this.sharedUserRepository.findUnique({ id: userId, deletedAt: null })
     if (!user) {
       throw EmailNotFoundException
     }
@@ -345,7 +353,7 @@ export class AuthService {
       throw TOTPNotEnabledException
     }
 
-    //2. Kiem tra TOTP co hop le hay khong
+    // 2. Kiểm tra mã TOTP có hợp lệ hay không
     if (totpCode) {
       const isValid = this.twoFactorService.verifyTOTP({
         email: user.email,
@@ -353,24 +361,23 @@ export class AuthService {
         token: totpCode,
       })
       if (!isValid) {
-        throw InvalidTOTPAndCodeException
+        throw InvalidTOTPException
       }
     } else if (code) {
+      // 3. Kiểm tra mã OTP email có hợp lệ hay không
       await this.validateVerificationCode({
         email: user.email,
         code,
         type: TypeOfVerificationCode.DISABLE_2FA,
       })
     }
-    // 4. Cap nhat secret trong database thanh null
-    await this.authRepository.updateUser(
-      {
-        id: user.id,
-      },
-      {
-        totpSecret: null,
-      },
-    )
-    return { message: 'Disable two-factor authentication successfully' }
+
+    // 4. Cập nhật secret thành null
+    await this.sharedUserRepository.update({ id: userId, deletedAt: null }, { totpSecret: null, updatedById: userId })
+
+    // 5. Trả về thông báo
+    return {
+      message: 'Tắt 2FA thành công',
+    }
   }
 }
