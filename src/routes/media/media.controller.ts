@@ -5,25 +5,32 @@ import {
   ParseFilePipe,
   Post,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common'
-import { FileInterceptor } from '@nestjs/platform-express'
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 
 @Controller('media')
 export class MediaController {
   @Post('images/upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FilesInterceptor('files', 100, {
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
   uploadFile(
-    @UploadedFile(
+    @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), //1MB
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), //10MB
           new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
         ],
       }),
     )
-    file: Express.Multer.File,
+    files: Array<Express.Multer.File>,
   ) {
-    console.log(file)
+    console.log(files)
   }
 }
