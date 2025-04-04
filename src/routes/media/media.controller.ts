@@ -16,6 +16,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { Response } from 'express'
 import path from 'path'
 import { MediaService } from 'src/routes/media/media.service'
+import { ParseFilePipeWithUnlink } from 'src/routes/media/parse-file-pipe-with-unlink.pipe'
 import envConfig from 'src/shared/config'
 import { UPLOAD_DIR } from 'src/shared/constants/other.constants'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
@@ -34,9 +35,9 @@ export class MediaController {
   )
   async uploadFile(
     @UploadedFiles(
-      new ParseFilePipe({
+      new ParseFilePipeWithUnlink({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), //10MB
+          new MaxFileSizeValidator({ maxSize: 1 * 1024 * 1024 }), //10MB
           new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
         ],
       }),
