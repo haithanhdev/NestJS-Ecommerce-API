@@ -15,6 +15,7 @@ import { UserModule } from './routes/user/user.module'
 import { MediaModule } from './routes/media/media.module'
 import { BrandModule } from './routes/brand/brand.module'
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
+import { CategoryModule } from './routes/category/category.module';
 import path from 'path'
 
 @Module({
@@ -37,6 +38,7 @@ import path from 'path'
     UserModule,
     MediaModule,
     BrandModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [
