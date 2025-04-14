@@ -1,34 +1,68 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import {
   CreateProductBodyType,
   GetProductDetailResType,
-  GetProductsQueryType,
   GetProductsResType,
   ProductType,
   UpdateProductBodyType,
 } from 'src/routes/product/product.model'
 import { ALL_LANGUAGE_CODE } from 'src/shared/constants/other.constants'
 import { PrismaService } from 'src/shared/services/prisma.service'
-
 @Injectable()
 export class ProductRepo {
   constructor(private readonly prismaService: PrismaService) {}
-  async list(query: GetProductsQueryType, languageId: string): Promise<GetProductsResType> {
-    const skip = (query.page - 1) * query.limit
-    const take = query.limit
+
+  async list({
+    limit,
+    page,
+    name,
+    brandIds,
+    categories,
+    minPrice,
+    maxPrice,
+    createdById,
+    isPublic,
+    languageId,
+  }: {
+    limit: number
+    page: number
+    name?: string
+    brandIds?: number[]
+    categories?: number[]
+    minPrice?: number
+    maxPrice?: number
+    createdById?: number
+    isPublic?: boolean
+    languageId: string
+  }): Promise<GetProductsResType> {
+    const skip = (page - 1) * limit
+    const take = limit
+    let where: Prisma.ProductWhereInput = {
+      deletedAt: null,
+      createdById: createdById ? createdById : undefined,
+    }
+    if (isPublic === true) {
+      where.publishedAt = {
+        lte: new Date(),
+        not: null,
+      }
+    } else if (isPublic === false) {
+      where = {
+        ...where,
+        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
+      }
+    }
     const [totalItems, data] = await Promise.all([
       this.prismaService.product.count({
-        where: {
-          deletedAt: null,
-        },
+        where,
       }),
       this.prismaService.product.findMany({
-        where: {
-          deletedAt: null,
-        },
+        where,
         include: {
           productTranslations: {
-            where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
+            where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
           },
         },
         orderBy: {
@@ -41,21 +75,50 @@ export class ProductRepo {
     return {
       data,
       totalItems,
-      page: query.page,
-      limit: query.limit,
-      totalPages: Math.ceil(totalItems / query.limit),
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil(totalItems / limit),
     }
   }
 
-  findById(id: number, languageId: string): Promise<GetProductDetailResType | null> {
+  findById(productId: number): Promise<ProductType | null> {
     return this.prismaService.product.findUnique({
       where: {
-        id,
+        id: productId,
         deletedAt: null,
       },
+    })
+  }
+
+  getDetail({
+    productId,
+    languageId,
+    isPublic,
+  }: {
+    productId: number
+    languageId: string
+    isPublic?: boolean
+  }): Promise<GetProductDetailResType | null> {
+    let where: Prisma.ProductWhereUniqueInput = {
+      id: productId,
+      deletedAt: null,
+    }
+    if (isPublic === true) {
+      where.publishedAt = {
+        lte: new Date(),
+        not: null,
+      }
+    } else if (isPublic === false) {
+      where = {
+        ...where,
+        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
+      }
+    }
+    return this.prismaService.product.findUnique({
+      where,
       include: {
         productTranslations: {
-          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
+          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
         },
         skus: {
           where: {
@@ -65,14 +128,17 @@ export class ProductRepo {
         brand: {
           include: {
             brandTranslations: {
-              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
+              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
             },
           },
         },
         categories: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             categoryTranslations: {
-              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
+              where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
             },
           },
         },
@@ -92,11 +158,9 @@ export class ProductRepo {
       data: {
         createdById,
         ...productData,
-        //user gửi lên các categories có sẵn, sử dụng connect để liên kết với các categories
         categories: {
           connect: categories.map((category) => ({ id: category })),
         },
-        //Tạo mới skus cho product
         skus: {
           createMany: {
             data: skus,
@@ -105,21 +169,15 @@ export class ProductRepo {
       },
       include: {
         productTranslations: {
-          where: {
-            deletedAt: null,
-          },
+          where: { deletedAt: null },
         },
         skus: {
-          where: {
-            deletedAt: null,
-          },
+          where: { deletedAt: null },
         },
         brand: {
           include: {
             brandTranslations: {
-              where: {
-                deletedAt: null,
-              },
+              where: { deletedAt: null },
             },
           },
         },
@@ -129,9 +187,7 @@ export class ProductRepo {
           },
           include: {
             categoryTranslations: {
-              where: {
-                deletedAt: null,
-              },
+              where: { deletedAt: null },
             },
           },
         },
@@ -149,11 +205,11 @@ export class ProductRepo {
     data: UpdateProductBodyType
   }): Promise<ProductType> {
     const { skus: dataSkus, categories, ...productData } = data
-    //SKU đã tồn tại trong DB nhưng không có trong data payload thì sẽ bị xoá
-    //SKU đã tồn tại trong DB nhưng có trong data payload thì sẽ được cập nhật
-    //SKU không tồn tại trong DB nhưng có trong data payload thì sẽ được thêm mới
+    // SKU đã tồn tại trong DB nhưng không có trong data payload thì sẽ bị xóa
+    // SKU đã tồn tại trong DB nhưng có trong data payload thì sẽ được cập nhật
+    // SKY không tồn tại trong DB nhưng có trong data payload thì sẽ được thêm mới
 
-    //1. Lấy tất cả skus trong DB
+    // 1. Lấy danh sách SKU hiện tại trong DB
     const existingSKUs = await this.prismaService.sKU.findMany({
       where: {
         productId: id,
@@ -161,24 +217,23 @@ export class ProductRepo {
       },
     })
 
-    //2. Tìm các skus cần xoá (tồn lại trong DB nhưng không có trong data payload)
+    // 2. Tìm các SKUs cần xóa (tồn tại trong DB nhưng không có trong data payload)
     const skusToDelete = existingSKUs.filter((sku) => dataSkus.every((dataSku) => dataSku.value !== sku.value))
-    //Lấy các id cần xoá
     const skuIdsToDelete = skusToDelete.map((sku) => sku.id)
 
-    //3. Mapping ID vào trong data payload vì payload không có id nên phải mapping vào để upsert
-    const skusWithId = dataSkus.map((sku) => {
-      const existingSku = existingSKUs.find((existingSku) => existingSku.value === sku.value)
+    // 3. Mapping ID vào trong data payload
+    const skusWithId = dataSkus.map((dataSku) => {
+      const existingSku = existingSKUs.find((existingSKU) => existingSKU.value === dataSku.value)
       return {
-        ...sku,
+        ...dataSku,
         id: existingSku ? existingSku.id : null,
       }
     })
 
-    //4. Tìm các skus để cập nhật
+    // 4. Tìm các skus để cập nhật
     const skusToUpdate = skusWithId.filter((sku) => sku.id !== null)
 
-    //5. Tìm các skus để thêm mới
+    // 5. Tìm các skus để thêm mới
     const skusToCreate = skusWithId
       .filter((sku) => sku.id === null)
       .map((sku) => {
@@ -189,10 +244,8 @@ export class ProductRepo {
           createdById: updatedById,
         }
       })
-    //Sử dụng transaction để thực hiện nhiều tác vụ thay đổi database liên tiếp nhau
-    //Transaction nhận vào các return của method prisma
     const [product] = await this.prismaService.$transaction([
-      //Cập nhật product
+      // Cập nhật Product
       this.prismaService.product.update({
         where: {
           id,
@@ -206,8 +259,7 @@ export class ProductRepo {
           },
         },
       }),
-
-      //Xoá mềm các SKU không có trong data payload
+      // Xóa mềm các SKU không có trong data payload
       this.prismaService.sKU.updateMany({
         where: {
           id: {
@@ -219,9 +271,7 @@ export class ProductRepo {
           deletedById: updatedById,
         },
       }),
-
-      //Cập nhật các SKU cần cập nhật
-      //Vì nó trả về là 1 array các return thì phải dùng ...
+      // Cập nhật các SKU có trong data payload
       ...skusToUpdate.map((sku) =>
         this.prismaService.sKU.update({
           where: {
@@ -236,36 +286,47 @@ export class ProductRepo {
           },
         }),
       ),
-
-      //Thêm mới các SKU không có trong DB
+      // Thêm mới các SKU không có trong DB
       this.prismaService.sKU.createMany({
         data: skusToCreate,
       }),
     ])
+
     return product
   }
 
-  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean): Promise<ProductType> {
+  async delete(
+    {
+      id,
+      deletedById,
+    }: {
+      id: number
+      deletedById: number
+    },
+    isHard?: boolean,
+  ): Promise<ProductType> {
     if (isHard) {
-      const [product] = await Promise.all([
-        this.prismaService.product.delete({
-          where: {
-            id,
-          },
-        }),
-        this.prismaService.sKU.deleteMany({
-          where: {
-            productId: id,
-          },
-        }),
-      ])
-      return product
+      return this.prismaService.product.delete({
+        where: {
+          id,
+        },
+      })
     }
     const now = new Date()
     const [product] = await Promise.all([
       this.prismaService.product.update({
         where: {
           id,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: now,
+          deletedById,
+        },
+      }),
+      this.prismaService.productTranslation.updateMany({
+        where: {
+          productId: id,
           deletedAt: null,
         },
         data: {
