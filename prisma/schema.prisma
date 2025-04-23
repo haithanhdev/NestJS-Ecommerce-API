@@ -232,6 +232,7 @@ model Product {
   skus                SKU[]
   reviews             Review[]
   productTranslations ProductTranslation[]
+  orders              Order[]
 
   createdById Int?
   createdBy   User? @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -414,11 +415,12 @@ model ProductSKUSnapshot {
 }
 
 model Order {
-  id     Int                  @id @default(autoincrement())
-  userId Int
-  user   User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status OrderStatus
-  items  ProductSKUSnapshot[]
+  id       Int                  @id @default(autoincrement())
+  userId   Int
+  user     User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status   OrderStatus
+  items    ProductSKUSnapshot[]
+  products Product[]
 
   createdById Int?
   createdBy   User? @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
@@ -430,8 +432,11 @@ model Order {
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  // Product   Product?  @relation(fields: [productId], references: [id])
+  // productId Int?
 
   @@index([deletedAt])
+  @@index([status, deletedAt])
 }
 
 model Review {
