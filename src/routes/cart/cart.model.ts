@@ -1,6 +1,7 @@
 import { ProductTranslationSchema } from 'src/routes/product/product-translation/product-translation.model'
 import { ProductSchema } from 'src/shared/models/shared-product.model'
 import { SKUSchema } from 'src/shared/models/shared-sku.model'
+import { UserSchema } from 'src/shared/models/shared-user.model'
 import { z } from 'zod'
 
 export const CartItemSchema = z.object({
@@ -20,12 +21,21 @@ export const GetCartItemParamsSchema = z.object({
 
 //Extend sku để lấy thêm thông tin về mã sản phẩm
 //Extend thêm product và product translation để khi hiển thị trong giỏ hàng có được tên sản phẩm
-export const CartItemDetailSchema = CartItemSchema.extend({
-  sku: SKUSchema.extend({
-    product: ProductSchema.extend({
-      productTranslations: z.array(ProductTranslationSchema),
-    }),
+export const CartItemDetailSchema = z.object({
+  shop: UserSchema.pick({
+    id: true,
+    name: true,
+    avatar: true,
   }),
+  cartItems: z.array(
+    CartItemSchema.extend({
+      sku: SKUSchema.extend({
+        product: ProductSchema.extend({
+          productTranslations: z.array(ProductTranslationSchema),
+        }),
+      }),
+    }),
+  ),
 })
 
 //Frontend có thể làm lazy loading cũng được
