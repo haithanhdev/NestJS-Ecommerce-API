@@ -21,6 +21,7 @@ import path from 'path'
 import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module'
 import { CartModule } from './routes/cart/cart.module';
 import { OrderModule } from './routes/order/order.module';
+import { PaymentModule } from './routes/payment/payment.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { OrderModule } from './routes/order/order.module';
     ProductModule,
     CartModule,
     OrderModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [
