@@ -24,6 +24,7 @@ import { OrderModule } from './routes/order/order.module'
 import { PaymentModule } from './routes/payment/payment.module'
 import { BullModule } from '@nestjs/bullmq'
 import { PaymentConsumer } from 'src/queues/payment.consumer'
+import envConfig from 'src/shared/config'
 
 @Module({
   imports: [
@@ -40,10 +41,11 @@ import { PaymentConsumer } from 'src/queues/payment.consumer'
       connection: {
         // host: 'localhost',
         // port: 6379,
-        host: 'redis-18141.crce194.ap-seast-1-1.ec2.redns.redis-cloud.com',
-        port: 18141,
-        username: 'default',
-        password: 'Mx0aJWjy2uCNxMWzhxaNPtWQ1ZOnqHGD',
+        // host: 'redis-18141.crce194.ap-seast-1-1.ec2.redns.redis-cloud.com',
+        // port: 18141,
+        // username: 'default',
+        // password: 'Mx0aJWjy2uCNxMWzhxaNPtWQ1ZOnqHGD',
+        url: envConfig.REDIS_URL,
       },
     }),
     SharedModule,
