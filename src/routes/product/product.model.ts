@@ -2,6 +2,7 @@ import { UpsertSKUBodySchema } from 'src/routes/product/sku.model'
 import { OrderBy, SortBy } from 'src/shared/constants/other.constants'
 import { BrandIncludeTranslationSchema } from 'src/shared/models/shared-brand.model'
 import { CategoryIncludeTranslationSchema } from 'src/shared/models/shared-category.model'
+import { OrderSchema, ProductSKUSnapshotSchema } from 'src/shared/models/shared-order.model'
 import { ProductTranslationSchema } from 'src/shared/models/shared-product-translation-model'
 import { ProductSchema, VariantsType } from 'src/shared/models/shared-product.model'
 import { SKUSchema } from 'src/shared/models/shared-sku.model'
@@ -47,8 +48,8 @@ export const GetProductsQuerySchema = z.object({
     }
     return value
   }, z.array(z.coerce.number().int().positive()).optional()),
-  minPrice: z.coerce.number().positive().optional(),
-  maxPrice: z.coerce.number().positive().optional(),
+  minPrice: z.coerce.number().optional(),
+  maxPrice: z.coerce.number().optional(),
   createdById: z.coerce.number().int().positive().optional(),
   orderBy: z.enum([OrderBy.Asc, OrderBy.Desc]).default(OrderBy.Desc),
   sortBy: z.enum([SortBy.Sale, SortBy.Price, SortBy.CreatedAt]).default(SortBy.CreatedAt),
@@ -66,6 +67,8 @@ export const GetProductsResSchema = z.object({
   data: z.array(
     ProductSchema.extend({
       productTranslations: z.array(ProductTranslationSchema),
+      orders: z.array(OrderSchema),
+      productSKUSnapshots: z.array(ProductSKUSnapshotSchema.pick({ id: true, productId: true, quantity: true })),
     }),
   ),
   totalItems: z.number(),
@@ -85,6 +88,7 @@ export const GetProductDetailResSchema = ProductSchema.extend({
   skus: z.array(SKUSchema),
   categories: z.array(CategoryIncludeTranslationSchema),
   brand: BrandIncludeTranslationSchema,
+  productSKUSnapshots: z.array(ProductSKUSnapshotSchema.pick({ id: true, productId: true, quantity: true })).optional(),
 })
 
 export const CreateProductBodySchema = ProductSchema.pick({

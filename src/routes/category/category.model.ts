@@ -2,7 +2,7 @@ import { CategoryIncludeTranslationSchema, CategorySchema } from 'src/shared/mod
 import { z } from 'zod'
 
 export const GetAllCategoriesResSchema = z.object({
-  data: z.array(CategorySchema),
+  data: z.array(CategoryIncludeTranslationSchema),
   totalItems: z.number(),
 })
 

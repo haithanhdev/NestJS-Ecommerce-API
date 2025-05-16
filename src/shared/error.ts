@@ -4,7 +4,7 @@ export const NotFoundRecordException = new NotFoundException('Error.NotFound')
 
 export const InvalidPasswordException = new UnprocessableEntityException([
   {
-    message: 'Error.InvalidPassword',
+    message: 'Error.InvalidPasswordorEmail',
     path: 'password',
   },
 ])

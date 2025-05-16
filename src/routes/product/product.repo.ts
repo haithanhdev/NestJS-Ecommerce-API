@@ -59,11 +59,26 @@ export class ProductRepo {
       }
     }
     if (name) {
-      where.name = {
-        contains: name,
-        //Khôg phân biệt hoa thường
-        mode: 'insensitive',
-      }
+      where.OR = [
+        {
+          name: {
+            contains: name,
+            mode: 'insensitive',
+          },
+        },
+        {
+          productTranslations: {
+            some: {
+              name: {
+                contains: name,
+                mode: 'insensitive',
+              },
+              languageId: languageId === ALL_LANGUAGE_CODE ? undefined : languageId,
+              deletedAt: null,
+            },
+          },
+        },
+      ]
     }
     if (brandIds && brandIds.length > 0) {
       where.brandId = {
@@ -116,7 +131,11 @@ export class ProductRepo {
               deletedAt: null,
               status: 'DELIVERED',
             },
+            include: {
+              items: true,
+            },
           },
+          productSKUSnapshots: true,
         },
         orderBy: calculatedOrderBy,
         skip,
@@ -193,6 +212,7 @@ export class ProductRepo {
             },
           },
         },
+        productSKUSnapshots: true,
       },
     })
   }
@@ -203,7 +223,7 @@ export class ProductRepo {
   }: {
     createdById: number
     data: CreateProductBodyType
-  }): Promise<GetProductDetailResType> {
+  }): Promise<Omit<GetProductDetailResType, 'productSKUSnapshots'>> {
     const { skus, categories, ...productData } = data
     return this.prismaService.product.create({
       data: {

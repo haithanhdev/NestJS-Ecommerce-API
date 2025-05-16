@@ -95,7 +95,14 @@ export class GoogleService {
         roleId: user.roleId,
         roleName: user.role.name,
       })
-      return authTokens
+      return {
+        message: 'Login with google successfully',
+        data: {
+          accessToken: authTokens.accessToken,
+          refreshToken: authTokens.refreshToken,
+          user,
+        },
+      }
     } catch (error) {
       console.error(`Google callback error: ${error}`)
       throw error

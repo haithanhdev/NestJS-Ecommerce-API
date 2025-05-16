@@ -36,7 +36,11 @@ export class AuthController {
   @IsPublic()
   @ZodSerializerDto(RegisterResDTO)
   async register(@Body() body: RegisterBodyDTO) {
-    return await this.authService.register(body)
+    const res = await this.authService.register(body)
+    return {
+      message: 'Register successfully',
+      data: res,
+    }
   }
 
   @Post('otp')
@@ -50,11 +54,15 @@ export class AuthController {
   @IsPublic()
   @ZodSerializerDto(LoginResDTO)
   async login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
-    return await this.authService.login({
+    const res = await this.authService.login({
       ...body,
       userAgent,
       ip,
     })
+    return {
+      message: 'Login successfully',
+      data: res,
+    }
   }
 
   @Post('refresh-token')
@@ -88,7 +96,7 @@ export class AuthController {
     try {
       const data = await this.googleService.googleCallback({ code, state })
       return res.redirect(
-        `${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}`,
+        `${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?accessToken=${data.data.accessToken}&refreshToken=${data.data.refreshToken}`,
       )
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login with google failed, please try again'

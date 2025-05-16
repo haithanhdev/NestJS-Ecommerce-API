@@ -24,9 +24,12 @@ export const RegisterBodySchema = UserSchema.pick({
     }
   })
 
-export const RegisterResSchema = UserSchema.omit({
-  password: true,
-  totpSecret: true,
+export const RegisterResSchema = z.object({
+  message: z.string(),
+  data: UserSchema.omit({
+    password: true,
+    totpSecret: true,
+  }),
 })
 
 export const VerificationCodeSchema = z.object({
@@ -75,8 +78,15 @@ export const LoginBodySchema = UserSchema.pick({
   })
 
 export const LoginResSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
+  message: z.string(),
+  data: z.object({
+    accessToken: z.string(),
+    refreshToken: z.string(),
+    user: UserSchema.omit({
+      password: true,
+      totpSecret: true,
+    }),
+  }),
 })
 
 //Refresh token

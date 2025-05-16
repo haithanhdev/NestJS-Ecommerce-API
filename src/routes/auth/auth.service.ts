@@ -189,7 +189,10 @@ export class AuthService {
       roleId: user.roleId,
       roleName: user.role.name,
     })
-    return tokens
+    return {
+      ...tokens,
+      user,
+    }
   }
 
   async generateTokens({ userId, deviceId, roleId, roleName }: AccessTokenPayloadCreate) {

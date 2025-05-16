@@ -15,6 +15,7 @@ export class BrandRepo {
   constructor(private prismaService: PrismaService) {}
   //Hỗ trợ sẵn phân trang và đa ngôn ngữ. FrontEnd chỉ cần truyền vào languageId
   async list(pagination: PaginationQueryType, languageId: string): Promise<GetBrandsResType> {
+    pagination.limit = 100
     const skip = (pagination.page - 1) * pagination.limit
     const take = pagination.limit
     const [totalItems, data] = await Promise.all([
