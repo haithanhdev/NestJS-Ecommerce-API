@@ -21,11 +21,11 @@ export class PaymentGateway {
   //     console.log('Websocket server initialized')
   //   }
 
-  //   handleConnection(client: Socket, ...args: any[]) {
-  //     //Khi client connect với server thì sẽ thực hiện
-  //     console.log('Client connected')
-  //     console.log(client.id)
-  //   }
+  handleConnection(client: Socket, ...args: any[]) {
+    //Khi client connect với server thì sẽ thực hiện
+    console.log('Client connected')
+    console.log(client.id)
+  }
 
   // handleDisconnect(client: any) {
   //   //Khi client disconnect với server thì sẽ thực hiện
