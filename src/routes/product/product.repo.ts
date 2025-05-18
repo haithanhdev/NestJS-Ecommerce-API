@@ -136,6 +136,17 @@ export class ProductRepo {
             },
           },
           productSKUSnapshots: true,
+          brand: {
+            include: {
+              brandTranslations: {
+                where: {
+                  languageId: languageId === ALL_LANGUAGE_CODE ? undefined : languageId,
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+          skus: true,
         },
         orderBy: calculatedOrderBy,
         skip,

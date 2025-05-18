@@ -69,6 +69,8 @@ export const GetProductsResSchema = z.object({
       productTranslations: z.array(ProductTranslationSchema),
       orders: z.array(OrderSchema),
       productSKUSnapshots: z.array(ProductSKUSnapshotSchema.pick({ id: true, productId: true, quantity: true })),
+      brand: BrandIncludeTranslationSchema,
+      skus: z.array(SKUSchema),
     }),
   ),
   totalItems: z.number(),
