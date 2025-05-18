@@ -3,8 +3,8 @@ import { AppModule } from 'src/app.module'
 import { HTTPMethod, RoleName } from 'src/shared/constants/role.constants'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATIONS', 'PROFILE', 'CART', 'ORDERS']
-const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS']
+const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATIONS', 'PROFILE', 'CART', 'ORDERS', 'CHAT']
+const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'CHAT']
 
 const prisma = new PrismaService()
 async function bootstrap() {
@@ -12,7 +12,7 @@ async function bootstrap() {
   await app.listen(3000)
 
   const server = app.getHttpServer()
-  const router = server._events.request._router
+  const router = app.getHttpAdapter().getInstance()._router
   const permissionsInDb = await prisma.permission.findMany({
     where: {
       deletedAt: null,
