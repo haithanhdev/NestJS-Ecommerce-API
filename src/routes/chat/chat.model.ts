@@ -25,6 +25,12 @@ export const GetMessagesResSchema = z.object({
   page: z.number(), // Số trang hiện tại
   limit: z.number(), // Số item trên 1 trang
   totalPages: z.number(), // Tổng số trang
+  receiver: z.object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string(),
+    avatar: z.string().nullable(),
+  }).nullable(),
 })
 
 export const CreateMessageBodySchema = MessageSchema.pick({
@@ -33,6 +39,19 @@ export const CreateMessageBodySchema = MessageSchema.pick({
   content: true,
   createdAt: true
 })
+export const GetReceiversSchema = z.object({
+  data: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string(),
+    avatar: z.string().nullable(),
+  })),
+  totalItems: z.number(),
+  page: z.number(), 
+  limit: z.number(), 
+  totalPages: z.number(), 
+})
+
 
 export type MessageType = z.infer<typeof MessageSchema>
 export type GetMessagesResType = z.infer<typeof GetMessagesResSchema>
