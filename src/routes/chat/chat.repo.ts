@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
-import { CreateMessageBodyType, GetMessagesQueryType, GetMessagesResType, MessageType } from './chat.model'
+import { CreateMessageBodyType, GetMessagesQueryType, GetMessagesResType, GetUserResType, MessageType } from './chat.model'
 
 @Injectable()
 export class ChatRepo {
@@ -45,7 +45,7 @@ export class ChatRepo {
             })
         ])
         return {
-            data,
+            messages: data,
             totalItems,
             page: page,
             limit: limit,
@@ -53,35 +53,12 @@ export class ChatRepo {
             receiver,
         }
     }
-    async listReceivers({ limit = 10, page = 1, fromUserId }: {
-        limit: number,
-        page: number,
-        fromUserId: number
-    }): Promise<any> {
-        const skip = (page - 1) * limit
-        const take = limit
-        const [countQuery, data] = await Promise.all([
-            this.prismaService.$queryRaw<{count: number}[]>`
-                select count(distinct( "toUserId" ))
-                from "Message"
-                where "fromUserId" = ${fromUserId}
-            `,
-            this.prismaService.$queryRaw`
+    async listReceivers(fromUserId: number): Promise<any> {
+        return this.prismaService.$queryRaw`
                 select distinct on("User"."id") "User"."id", "User"."email", "User"."name", "User"."avatar"
                 from "User", "Message"
                 where "User"."id" = "Message"."toUserId" and "Message"."fromUserId" = ${fromUserId}
-                offset ${skip}
-                limit ${take}
             `
-        ])
-        const totalItems = Number(countQuery[0].count)
-        return {
-            data,
-            totalItems,
-            page: page,
-            limit: limit,
-            totalPages: Math.ceil(totalItems / limit),
-        }
     }
     create(data: CreateMessageBodyType): Promise<MessageType> {
         return this.prismaService.message.create({

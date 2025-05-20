@@ -9,8 +9,8 @@ export class ChatService {
     async list(props: {query: GetMessagesQueryType}) {
         return this.chatRepo.list(props.query)
     }
-    listReceivers(props: {query}) {
-        return this.chatRepo.listReceivers(props.query)
+    listReceivers({fromUserId}) {
+        return this.chatRepo.listReceivers(fromUserId)
     }
     create(data: CreateMessageBodyType) {
         return this.chatRepo.create(data)
