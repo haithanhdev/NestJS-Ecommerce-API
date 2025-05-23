@@ -3,7 +3,16 @@ import { AppModule } from 'src/app.module'
 import { HTTPMethod, RoleName } from 'src/shared/constants/role.constants'
 import { PrismaService } from 'src/shared/services/prisma.service'
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATIONS', 'PROFILE', 'CART', 'ORDERS']
+const SellerModule = [
+  'AUTH',
+  'MEDIA',
+  'MANAGE-PRODUCT',
+  'PRODUCT-TRANSLATIONS',
+  'PROFILE',
+  'CART',
+  'ORDERS',
+  'LANGUAGES',
+]
 const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS']
 
 const prisma = new PrismaService()
@@ -12,7 +21,7 @@ async function bootstrap() {
   await app.listen(3000)
 
   const server = app.getHttpServer()
-  const router = server._events.request._router
+  const router = app.getHttpAdapter().getInstance()._router
   const permissionsInDb = await prisma.permission.findMany({
     where: {
       deletedAt: null,
@@ -20,18 +29,20 @@ async function bootstrap() {
   })
   const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string; module: string }[] =
     router.stack
-      .filter((layer) => layer.route)
       .map((layer) => {
-        const path = layer.route.path
-        const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod
-        const moduleName = String(path.split('/')[1]).toUpperCase()
-        return {
-          path,
-          method,
-          name: method + ' ' + path,
-          module: moduleName,
+        if (layer.route) {
+          const path = layer.route?.path
+          const method = String(layer.route?.stack[0].method).toUpperCase() as keyof typeof HTTPMethod
+          const moduleName = String(path.split('/')[1]).toUpperCase()
+          return {
+            path,
+            method,
+            name: method + ' ' + path,
+            module: moduleName,
+          }
         }
       })
+      .filter((item) => item !== undefined)
   //Tạo object permissionInDbMap với key là [method-path]
   const permissionsInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item

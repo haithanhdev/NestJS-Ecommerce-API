@@ -6,6 +6,8 @@ export const UpsertSKUBodySchema = SKUSchema.pick({
   price: true,
   stock: true,
   image: true,
+}).extend({
+  id: z.number().optional(),
 })
 
 export type UpsertSKUBodyType = z.infer<typeof UpsertSKUBodySchema>

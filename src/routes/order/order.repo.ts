@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { OrderStatus, Prisma } from '@prisma/client'
 import {
   CannotCancelOrderException,
+  CannotChangeOrderStatusException,
   NotFoundCartItemException,
   OrderNotFoundException,
   OutOfStockSKUException,
@@ -10,6 +11,7 @@ import {
 } from 'src/routes/order/order.error'
 import {
   CancelOrderResType,
+  ChangeOrderStatusBodyType,
   CreateOrderBodyType,
   CreateOrderResType,
   GetOrderDetailResType,
@@ -34,6 +36,43 @@ export class OrderRepo {
     const where: Prisma.OrderWhereInput = {
       userId,
       status,
+    }
+
+    // Đếm tổng số order
+    const totalItem$ = this.prismaService.order.count({
+      where,
+    })
+    // Lấy list order
+    const data$ = await this.prismaService.order.findMany({
+      where,
+      include: {
+        items: true,
+      },
+      skip,
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+    const [data, totalItems] = await Promise.all([data$, totalItem$])
+    return {
+      data,
+      page,
+      limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+    }
+  }
+
+  async listOrders(userId: number, roleId: number, query: GetOrderListQueryType): Promise<GetOrderListResType> {
+    const { page, limit, status } = query
+    const skip = (page - 1) * limit
+    const take = limit
+    const where: Prisma.OrderWhereInput = {
+      status,
+    }
+    if (roleId === 3) {
+      where.shopId = userId
     }
 
     // Đếm tổng số order
@@ -216,13 +255,19 @@ export class OrderRepo {
     }
   }
 
-  async detail(userId: number, orderid: number): Promise<GetOrderDetailResType> {
+  async detail(userId: number, roleId: number, orderid: number): Promise<GetOrderDetailResType> {
+    const where: Prisma.OrderWhereUniqueInput = {
+      id: orderid,
+      deletedAt: null,
+    }
+    if (roleId === 3) {
+      where.shopId = userId
+    } else if (roleId === 2) {
+      where.userId = userId
+    }
+
     const order = await this.prismaService.order.findUnique({
-      where: {
-        id: orderid,
-        userId,
-        deletedAt: null,
-      },
+      where,
       include: {
         items: true,
       },
@@ -233,26 +278,69 @@ export class OrderRepo {
     return order
   }
 
-  async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
+  async cancel(userId: number, roleId: number, orderId: number): Promise<CancelOrderResType> {
     try {
+      const where: Prisma.OrderWhereUniqueInput = {
+        id: orderId,
+        deletedAt: null,
+      }
+      if (roleId === 3) {
+        where.shopId = userId
+      } else if (roleId === 2) {
+        where.userId = userId
+      }
       const order = await this.prismaService.order.findUniqueOrThrow({
-        where: {
-          id: orderId,
-          userId,
-          deletedAt: null,
-        },
+        where,
       })
       if (order.status !== OrderStatus.PENDING_PAYMENT) {
         throw CannotCancelOrderException
       }
       const updatedOrder = await this.prismaService.order.update({
-        where: {
-          id: orderId,
-          userId,
-          deletedAt: null,
-        },
+        where,
         data: {
           status: OrderStatus.CANCELLED,
+          updatedById: userId,
+        },
+      })
+      return updatedOrder
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw OrderNotFoundException
+      }
+      throw error
+    }
+  }
+
+  async changeStatus(
+    userId: number,
+    roleId: number,
+    orderId: number,
+    body: ChangeOrderStatusBodyType,
+  ): Promise<CancelOrderResType> {
+    try {
+      const where: Prisma.OrderWhereUniqueInput = {
+        id: orderId,
+        deletedAt: null,
+      }
+      if (roleId === 3) {
+        where.shopId = userId
+      } else if (roleId === 2) {
+        where.userId = userId
+      }
+      const order = await this.prismaService.order.findUniqueOrThrow({
+        where,
+      })
+      if (
+        order.status === OrderStatus.PENDING_PAYMENT ||
+        order.status === OrderStatus.DELIVERED ||
+        order.status === OrderStatus.CANCELLED
+      ) {
+        throw CannotChangeOrderStatusException
+      }
+      const updatedOrder = await this.prismaService.order.update({
+        where,
+        data: {
+          status: body.status,
           updatedById: userId,
         },
       })

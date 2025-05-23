@@ -146,7 +146,21 @@ export class ProductRepo {
               },
             },
           },
-          skus: true,
+          skus: {
+            where: {
+              deletedAt: null,
+            },
+          },
+          categories: {
+            include: {
+              categoryTranslations: {
+                where: {
+                  languageId: languageId === ALL_LANGUAGE_CODE ? undefined : languageId,
+                  deletedAt: null,
+                },
+              },
+            },
+          },
         },
         orderBy: calculatedOrderBy,
         skip,
@@ -302,10 +316,12 @@ export class ProductRepo {
       },
     })
 
+    console.log(existingSKUs)
+
     // 2. Tìm các SKUs cần xóa (tồn tại trong DB nhưng không có trong data payload)
     const skusToDelete = existingSKUs.filter((sku) => dataSkus.every((dataSku) => dataSku.value !== sku.value))
     const skuIdsToDelete = skusToDelete.map((sku) => sku.id)
-
+    console.log(skuIdsToDelete)
     // 3. Mapping ID vào trong data payload
     const skusWithId = dataSkus.map((dataSku) => {
       const existingSku = existingSKUs.find((existingSKU) => existingSKU.value === dataSku.value)

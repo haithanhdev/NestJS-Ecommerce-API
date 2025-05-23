@@ -3,6 +3,7 @@ import { ZodSerializerDto } from 'nestjs-zod'
 import {
   CancelOrderBodyDTO,
   CancelOrderResDTO,
+  ChangeOrderStatusBodyDTO,
   CreateOrderBodyDTO,
   CreateOrderResDTO,
   GetOrderDetailResDTO,
@@ -23,6 +24,16 @@ export class OrderController {
     return this.orderService.list(userId, query)
   }
 
+  @Get('/manage')
+  @ZodSerializerDto(GetOrderListResDTO)
+  getOrders(
+    @ActiveUser('userId') userId: number,
+    @ActiveUser('roleId') roleId: number,
+    @Query() query: GetOrderListQueryDTO,
+  ) {
+    return this.orderService.listOrders(userId, roleId, query)
+  }
+
   @Post()
   @ZodSerializerDto(CreateOrderResDTO)
   create(@ActiveUser('userId') userId: number, @Body() body: CreateOrderBodyDTO) {
@@ -31,13 +42,43 @@ export class OrderController {
 
   @Get(':orderId')
   @ZodSerializerDto(GetOrderDetailResDTO)
-  detail(@ActiveUser('userId') userId: number, @Param() param: GetOrderParamsDTO) {
-    return this.orderService.detail(userId, param.orderId)
+  detail(
+    @ActiveUser('userId') userId: number,
+    @ActiveUser('roleId') roleId: number,
+    @Param() param: GetOrderParamsDTO,
+  ) {
+    return this.orderService.detail(userId, roleId, param.orderId)
+  }
+
+  @Get('/manage/:orderId')
+  @ZodSerializerDto(GetOrderDetailResDTO)
+  detailOrder(
+    @ActiveUser('userId') userId: number,
+    @ActiveUser('roleId') roleId: number,
+    @Param() param: GetOrderParamsDTO,
+  ) {
+    return this.orderService.detail(userId, roleId, param.orderId)
   }
 
   @Put(':orderId')
   @ZodSerializerDto(CancelOrderResDTO)
-  cancel(@ActiveUser('userId') userId: number, @Param() param: GetOrderParamsDTO, @Body() _: CancelOrderBodyDTO) {
-    return this.orderService.cancel(userId, param.orderId)
+  cancel(
+    @ActiveUser('userId') userId: number,
+    @ActiveUser('roleId') roleId: number,
+    @Param() param: GetOrderParamsDTO,
+    @Body() _: CancelOrderBodyDTO,
+  ) {
+    return this.orderService.cancel(userId, roleId, param.orderId)
+  }
+
+  @Put('/status/:orderId')
+  @ZodSerializerDto(CancelOrderResDTO)
+  changeStatus(
+    @ActiveUser('userId') userId: number,
+    @ActiveUser('roleId') roleId: number,
+    @Param() param: GetOrderParamsDTO,
+    @Body() body: ChangeOrderStatusBodyDTO,
+  ) {
+    return this.orderService.changeStatus(userId, roleId, param.orderId, body)
   }
 }

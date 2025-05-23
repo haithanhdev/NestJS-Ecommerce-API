@@ -25,7 +25,7 @@ import { PaymentModule } from './routes/payment/payment.module'
 import { BullModule } from '@nestjs/bullmq'
 import { PaymentConsumer } from 'src/queues/payment.consumer'
 import { WebsocketModule } from './websocket/websocket.module'
-import { ChatModule } from './routes/chat/chat.module';
+import { ChatModule } from './routes/chat/chat.module'
 import envConfig from 'src/shared/config'
 
 @Module({
