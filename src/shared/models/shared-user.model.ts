@@ -27,21 +27,26 @@ export const UserSchema = z.object({
 export const GetUserProfileResSchema = UserSchema.omit({
   password: true,
   totpSecret: true,
+  phoneNumber: true,
 }).extend({
   role: RoleSchema.pick({
     id: true,
     name: true,
-  }).extend({
-    permissions: z.array(
-      PermissionSchema.pick({
-        id: true,
-        name: true,
-        module: true,
-        path: true,
-        method: true,
-      }),
-    ),
-  }),
+  })
+    .extend({
+      permissions: z.array(
+        PermissionSchema.pick({
+          id: true,
+          name: true,
+          module: true,
+          path: true,
+          method: true,
+        }),
+      ),
+    })
+    .extend({
+      phoneNumber: z.string().min(9).max(15).optional(),
+    }),
 })
 
 /**
