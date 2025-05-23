@@ -43,7 +43,7 @@ export class OrderRepo {
       where,
     })
     // Lấy list order
-    const data$ = await this.prismaService.order.findMany({
+    const data$ = this.prismaService.order.findMany({
       where,
       include: {
         items: true,

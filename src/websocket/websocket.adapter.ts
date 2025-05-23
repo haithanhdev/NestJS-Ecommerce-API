@@ -51,6 +51,7 @@ export class WebsocketAdapter extends IoAdapter {
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken)
       await this.sharedWebsocketRepository.create({ id: socket.id, userId })
+      socket.data.userId = userId
       socket.on('disconnect', async () => {
         await this.sharedWebsocketRepository.delete(socket.id).catch(() => {})
       })
