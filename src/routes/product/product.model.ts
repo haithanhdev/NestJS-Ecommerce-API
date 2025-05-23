@@ -71,6 +71,7 @@ export const GetProductsResSchema = z.object({
       productSKUSnapshots: z.array(ProductSKUSnapshotSchema.pick({ id: true, productId: true, quantity: true })),
       brand: BrandIncludeTranslationSchema,
       skus: z.array(SKUSchema),
+      categories: z.array(CategoryIncludeTranslationSchema),
     }),
   ),
   totalItems: z.number(),
@@ -136,7 +137,41 @@ export const CreateProductBodySchema = ProductSchema.pick({
     }
   })
 
-export const UpdateProductBodySchema = CreateProductBodySchema
+export const UpdateProductBodySchema = ProductSchema.pick({
+  publishedAt: true,
+  name: true,
+  basePrice: true,
+  virtualPrice: true,
+  brandId: true,
+  images: true,
+  variants: true,
+})
+  .extend({
+    categories: z.array(z.coerce.number().int().positive()),
+    skus: z.array(UpsertSKUBodySchema),
+  })
+  .strict()
+  .superRefine(({ variants, skus }, ctx) => {
+    // Kiểm tra xem số lượng SKU có hợp lệ hay không
+    const skuValueArray = generateSKUs(variants)
+    if (skus.length !== skuValueArray.length) {
+      return ctx.addIssue({
+        code: 'custom',
+        path: ['skus'],
+        message: `Số lượng SKU nên là ${skuValueArray.length}. Vui lòng kiểm tra lại.`,
+      })
+    }
+    const skuValueSet = new Set(skuValueArray.map((item) => item.value))
+    const allSkusValid = skus.every((sku) => skuValueSet.has(sku.value))
+
+    if (!allSkusValid) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['skus'],
+        message: `Giá trị SKU không hợp lệ. Vui lòng kiểm tra lại.`,
+      })
+    }
+  })
 
 export type GetProductsResType = z.infer<typeof GetProductsResSchema>
 export type GetProductsQueryType = z.infer<typeof GetProductsQuerySchema>
