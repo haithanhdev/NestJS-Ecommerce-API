@@ -26,6 +26,7 @@ import { BullModule } from '@nestjs/bullmq'
 import { PaymentConsumer } from 'src/queues/payment.consumer'
 import { WebsocketModule } from './websocket/websocket.module'
 import { ChatModule } from './routes/chat/chat.module'
+import { ReviewModule } from './routes/review/review.module';
 import envConfig from 'src/shared/config'
 
 @Module({
@@ -66,6 +67,7 @@ import envConfig from 'src/shared/config'
     PaymentModule,
     WebsocketModule,
     ChatModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [
