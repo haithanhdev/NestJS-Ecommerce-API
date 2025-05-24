@@ -1,6 +1,8 @@
 import { INestApplicationContext } from '@nestjs/common'
 import { IoAdapter } from '@nestjs/platform-socket.io'
+import { generate } from 'rxjs'
 import { Server, ServerOptions, Socket } from 'socket.io'
+import { generateRoomUserId } from 'src/shared/helpers'
 import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket.repo'
 import { TokenService } from 'src/shared/services/token.service'
 
@@ -50,8 +52,10 @@ export class WebsocketAdapter extends IoAdapter {
     }
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken)
-      await this.sharedWebsocketRepository.create({ id: socket.id, userId })
+      await socket.join(generateRoomUserId(userId))
       socket.data.userId = userId
+
+      await this.sharedWebsocketRepository.create({ id: socket.id, userId })
       socket.on('disconnect', async () => {
         await this.sharedWebsocketRepository.delete(socket.id).catch(() => {})
       })
