@@ -11,6 +11,7 @@ import {
 import { UserService } from 'src/routes/user/user.service'
 import { ActiveRolePermissions } from 'src/shared/decorators/active-role-permissions'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { GetUserProfileResDTO, UpdateProfileResDTO } from 'src/shared/dtos/shared-user.dto'
 
@@ -27,6 +28,7 @@ export class UserController {
     })
   }
 
+  @IsPublic()
   @Get(':userId')
   @ZodSerializerDto(GetUserProfileResDTO)
   findById(@Param() params: GetUserParamsDTO) {
