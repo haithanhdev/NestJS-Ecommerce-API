@@ -39,6 +39,7 @@ export const GetUserProfileResSchema = z
     deletedAt: z.date().nullable(),
     createdAt: z.date(),
     updatedAt: z.date(),
+    totpSecret: z.string().nullable(),
   })
   .extend({
     role: RoleSchema.pick({
