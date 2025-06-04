@@ -4,6 +4,23 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": [{ "include": "i18n/**/*", "watchAssets": true, "outDir": "dist/src" }]
+    "builder": {
+      "type": "swc",
+      "options": {
+        "extensions": [
+          ".js",
+          ".ts",
+          ".jsx",
+          ".tsx"
+        ]
+      }
+    },
+    "assets": [
+      {
+        "include": "i18n/**/*",
+        "watchAssets": true,
+        "outDir": "dist/src"
+      }
+    ]
   }
 }
