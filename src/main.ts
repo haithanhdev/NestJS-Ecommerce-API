@@ -6,9 +6,11 @@ import { UPLOAD_DIR } from 'src/shared/constants/other.constants'
 import { WebsocketAdapter } from 'src/websocket/websocket.adapter'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { patchNestJsSwagger } from 'nestjs-zod'
+import helmet from 'helmet'
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
   app.enableCors()
+  app.use(helmet())
 
   patchNestJsSwagger()
   const config = new DocumentBuilder()
