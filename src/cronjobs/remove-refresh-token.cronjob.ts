@@ -7,7 +7,7 @@ export class RemoveRefreshTokenCronjob {
   private readonly logger = new Logger(RemoveRefreshTokenCronjob.name)
   constructor(private prismaService: PrismaService) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handleCron() {
     const refreshTokens = await this.prismaService.refreshToken.deleteMany({
       where: {
