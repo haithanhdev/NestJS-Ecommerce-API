@@ -57,9 +57,8 @@ export class AuthService {
     type: TypeOfVerificationCodeType
   }) {
     const vevificationCode = await this.authRepository.findUniqueVerificationCode({
-      email_code_type: {
+      email_type: {
         email,
-        code,
         type,
       },
     })
@@ -89,9 +88,8 @@ export class AuthService {
           roleId: clientRoleId,
         }),
         this.authRepository.deleteVerificationCode({
-          email_code_type: {
+          email_type: {
             email: body.email,
-            code: body.code,
             type: TypeOfVerificationCode.REGISTER,
           },
         }),
@@ -307,9 +305,8 @@ export class AuthService {
         },
       ),
       this.authRepository.deleteVerificationCode({
-        email_code_type: {
+        email_type: {
           email: body.email,
-          code: body.code,
           type: TypeOfVerificationCode.FORGOT_PASSWORD,
         },
       }),

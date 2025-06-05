@@ -26,11 +26,14 @@ import { BullModule } from '@nestjs/bullmq'
 import { PaymentConsumer } from 'src/queues/payment.consumer'
 import { WebsocketModule } from './websocket/websocket.module'
 import { ChatModule } from './routes/chat/chat.module'
-import { ReviewModule } from './routes/review/review.module';
+import { ReviewModule } from './routes/review/review.module'
 import envConfig from 'src/shared/config'
+import { ScheduleModule } from '@nestjs/schedule'
+import { RemoveRefreshTokenCronjob } from 'src/cronjobs/remove-refresh-token.cronjob'
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -82,6 +85,7 @@ import envConfig from 'src/shared/config'
       useClass: HttpExceptionFilter,
     },
     PaymentConsumer,
+    RemoveRefreshTokenCronjob,
     // {
     //   provide: APP_FILTER,
     //   useClass: CatchEverythingFilter,
