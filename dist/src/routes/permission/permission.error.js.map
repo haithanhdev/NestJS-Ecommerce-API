@@ -1,0 +1,1 @@
+{"version":3,"file":"permission.error.js","sourceRoot":"","sources":["../../../../src/routes/permission/permission.error.ts"],"names":[],"mappings":";;;AAAA,2CAA6D;AAEhD,QAAA,gCAAgC,GAAG,IAAI,qCAA4B,CAAC;IAC/E;QACE,OAAO,EAAE,+BAA+B;QACxC,IAAI,EAAE,MAAM;KACb;IACD;QACE,OAAO,EAAE,+BAA+B;QACxC,IAAI,EAAE,QAAQ;KACf;CACF,CAAC,CAAA"}

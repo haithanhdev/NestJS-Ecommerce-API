@@ -1,0 +1,42 @@
+import { z } from 'zod';
+export declare const PermissionSchema: z.ZodObject<{
+    id: z.ZodNumber;
+    name: z.ZodString;
+    description: z.ZodString;
+    module: z.ZodString;
+    path: z.ZodString;
+    method: z.ZodEnum<["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]>;
+    createdById: z.ZodNullable<z.ZodNumber>;
+    updatedById: z.ZodNullable<z.ZodNumber>;
+    deletedById: z.ZodNullable<z.ZodNumber>;
+    deletedAt: z.ZodNullable<z.ZodDate>;
+    createdAt: z.ZodDate;
+    updatedAt: z.ZodDate;
+}, "strip", z.ZodTypeAny, {
+    path: string;
+    id: number;
+    name: string;
+    description: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
+    module: string;
+}, {
+    path: string;
+    id: number;
+    name: string;
+    description: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
+    module: string;
+}>;
+export type PermissionType = z.infer<typeof PermissionSchema>;

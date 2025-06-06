@@ -1,0 +1,26 @@
+declare const envConfig: {
+    DATABASE_URL: string;
+    ACCESS_TOKEN_SECRET: string;
+    ACCESS_TOKEN_EXPIRES_IN: string;
+    REFRESH_TOKEN_SECRET: string;
+    REFRESH_TOKEN_EXPIRES_IN: string;
+    PAYMENT_API_KEY: string;
+    ADMIN_NAME: string;
+    ADMIN_PASSWORD: string;
+    ADMIN_EMAIL: string;
+    ADMIN_PHONENUMBER: string;
+    OTP_EXPIRES_IN: string;
+    RESEND_API_KEY: string;
+    GOOGLE_CLIENT_ID: string;
+    GOOGLE_CLIENT_SECRET: string;
+    GOOGLE_REDIRECT_URI: string;
+    GOOGLE_CLIENT_REDIRECT_URI: string;
+    APP_NAME: string;
+    PREFIX_STATIC_ENDPOINT: string;
+    S3_REGION: string;
+    S3_ACCESS_KEY: string;
+    S3_SECRET_KEY: string;
+    S3_BUCKET_NAME: string;
+    REDIS_URL: string;
+};
+export default envConfig;

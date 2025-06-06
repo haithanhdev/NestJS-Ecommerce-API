@@ -1,0 +1,42 @@
+import { z } from 'zod';
+export declare const SKUSchema: z.ZodObject<{
+    id: z.ZodNumber;
+    value: z.ZodString;
+    price: z.ZodNumber;
+    stock: z.ZodNumber;
+    image: z.ZodString;
+    productId: z.ZodNumber;
+    createdById: z.ZodNumber;
+    updatedById: z.ZodNullable<z.ZodNumber>;
+    deletedById: z.ZodNullable<z.ZodNumber>;
+    deletedAt: z.ZodNullable<z.ZodDate>;
+    createdAt: z.ZodDate;
+    updatedAt: z.ZodDate;
+}, "strip", z.ZodTypeAny, {
+    value: string;
+    id: number;
+    createdById: number;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    image: string;
+    productId: number;
+    price: number;
+    stock: number;
+}, {
+    value: string;
+    id: number;
+    createdById: number;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    image: string;
+    productId: number;
+    price: number;
+    stock: number;
+}>;
+export type SKUSchemaType = z.infer<typeof SKUSchema>;

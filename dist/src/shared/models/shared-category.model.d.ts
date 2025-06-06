@@ -1,0 +1,133 @@
+import { z } from 'zod';
+export declare const CategorySchema: z.ZodObject<{
+    id: z.ZodNumber;
+    parentCategoryId: z.ZodNullable<z.ZodNumber>;
+    name: z.ZodString;
+    logo: z.ZodNullable<z.ZodString>;
+    createdById: z.ZodNullable<z.ZodNumber>;
+    updatedById: z.ZodNullable<z.ZodNumber>;
+    deletedById: z.ZodNullable<z.ZodNumber>;
+    deletedAt: z.ZodNullable<z.ZodDate>;
+    createdAt: z.ZodDate;
+    updatedAt: z.ZodDate;
+}, "strip", z.ZodTypeAny, {
+    id: number;
+    name: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    logo: string | null;
+    parentCategoryId: number | null;
+}, {
+    id: number;
+    name: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    logo: string | null;
+    parentCategoryId: number | null;
+}>;
+export declare const CategoryIncludeTranslationSchema: z.ZodObject<z.objectUtil.extendShape<{
+    id: z.ZodNumber;
+    parentCategoryId: z.ZodNullable<z.ZodNumber>;
+    name: z.ZodString;
+    logo: z.ZodNullable<z.ZodString>;
+    createdById: z.ZodNullable<z.ZodNumber>;
+    updatedById: z.ZodNullable<z.ZodNumber>;
+    deletedById: z.ZodNullable<z.ZodNumber>;
+    deletedAt: z.ZodNullable<z.ZodDate>;
+    createdAt: z.ZodDate;
+    updatedAt: z.ZodDate;
+}, {
+    categoryTranslations: z.ZodArray<z.ZodObject<{
+        id: z.ZodNumber;
+        categoryId: z.ZodNumber;
+        languageId: z.ZodString;
+        name: z.ZodString;
+        description: z.ZodString;
+        createdById: z.ZodNullable<z.ZodNumber>;
+        updatedById: z.ZodNullable<z.ZodNumber>;
+        deletedById: z.ZodNullable<z.ZodNumber>;
+        deletedAt: z.ZodNullable<z.ZodDate>;
+        createdAt: z.ZodDate;
+        updatedAt: z.ZodDate;
+    }, "strip", z.ZodTypeAny, {
+        id: number;
+        name: string;
+        description: string;
+        createdById: number | null;
+        updatedById: number | null;
+        deletedById: number | null;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        languageId: string;
+        categoryId: number;
+    }, {
+        id: number;
+        name: string;
+        description: string;
+        createdById: number | null;
+        updatedById: number | null;
+        deletedById: number | null;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        languageId: string;
+        categoryId: number;
+    }>, "many">;
+}>, "strip", z.ZodTypeAny, {
+    id: number;
+    name: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    categoryTranslations: {
+        id: number;
+        name: string;
+        description: string;
+        createdById: number | null;
+        updatedById: number | null;
+        deletedById: number | null;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        languageId: string;
+        categoryId: number;
+    }[];
+    logo: string | null;
+    parentCategoryId: number | null;
+}, {
+    id: number;
+    name: string;
+    createdById: number | null;
+    updatedById: number | null;
+    deletedById: number | null;
+    deletedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    categoryTranslations: {
+        id: number;
+        name: string;
+        description: string;
+        createdById: number | null;
+        updatedById: number | null;
+        deletedById: number | null;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        languageId: string;
+        categoryId: number;
+    }[];
+    logo: string | null;
+    parentCategoryId: number | null;
+}>;

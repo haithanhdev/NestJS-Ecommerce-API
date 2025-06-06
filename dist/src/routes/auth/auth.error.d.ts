@@ -1,0 +1,13 @@
+import { UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+export declare const InvalidOTPException: UnprocessableEntityException;
+export declare const InvalidTOTPException: UnprocessableEntityException;
+export declare const OTPExpiredException: UnprocessableEntityException;
+export declare const FailedToSendOTPException: UnprocessableEntityException;
+export declare const EmailAlreadyExistsException: UnprocessableEntityException;
+export declare const EmailNotFoundException: UnprocessableEntityException;
+export declare const RefreshTokenAlreadyUsedException: UnauthorizedException;
+export declare const UnauthorizedAccessException: UnauthorizedException;
+export declare const GoogleUserInfoError: Error;
+export declare const TOTPAlreadyEnabledException: UnprocessableEntityException;
+export declare const TOTPNotEnabledException: UnprocessableEntityException;
+export declare const InvalidTOTPAndCodeException: UnprocessableEntityException;
